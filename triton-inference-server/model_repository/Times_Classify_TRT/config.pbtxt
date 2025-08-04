@@ -1,0 +1,29 @@
+name: "Times_Classify_TRT"
+platform: "tensorrt_plan"
+max_batch_size: 0
+default_model_filename: "timesnet_mean_fp32.engine"
+
+input [
+  {
+    name: "input"    # 必须与ONNX输入名称一致
+    data_type: TYPE_FP32
+    dims: [ 1, 20, 14 ]
+    is_shape_tensor: false
+  }
+]
+
+output [
+  {
+    name: "output"  # 与导出时的output_names一致-1
+    data_type: TYPE_FP32
+    dims: [ 1, 2 ]
+  }
+]
+
+instance_group [
+  {
+    count: 1           # GPU实例数
+    kind: KIND_GPU     # 使用GPU加速
+    gpus: [ 0 ]     # 使用的GPU设备ID
+  }
+]
