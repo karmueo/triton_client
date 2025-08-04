@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# 设置Triton客户端环境变量
+export TRITON_CLIENT_INSTALL_DIR="@TRITON_CLIENT_INSTALL_DIR@"
+export LD_LIBRARY_PATH="${TRITON_CLIENT_INSTALL_DIR}/lib:${LD_LIBRARY_PATH}"
+
+echo "Triton客户端环境已设置:"
+echo "  安装目录: ${TRITON_CLIENT_INSTALL_DIR}"
+echo "  库路径: ${LD_LIBRARY_PATH}"
+
+# 检查库文件是否存在
+if [ -f "${TRITON_CLIENT_INSTALL_DIR}/lib/libtritonclient.so" ]; then
+    echo "✅ Triton客户端库文件存在"
+else
+    echo "❌ Triton客户端库文件未找到"
+fi

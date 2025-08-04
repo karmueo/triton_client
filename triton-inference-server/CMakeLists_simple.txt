@@ -1,0 +1,86 @@
+cmake_minimum_required(VERSION 3.18)
+project(TritonClientSimple LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# 编译选项
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+
+# 查找必要的库
+find_package(PkgConfig REQUIRED)
+find_package(CURL REQUIRED)
+find_package(Threads REQUIRED)
+
+# 手动指定Triton客户端库路径（根据实际安装路径调整）
+set(TRITON_INCLUDE_DIR "/usr/include" CACHE PATH "Triton client include directory")
+set(TRITON_LIB_DIR "/usr/lib/x86_64-linux-gnu" CACHE PATH "Triton client library directory")
+
+# 检查头文件和库文件
+find_path(TRITON_CLIENT_INCLUDE_DIR 
+    NAMES triton/client/http_client.h
+    PATHS ${TRITON_INCLUDE_DIR} /usr/include /usr/local/include
+    PATH_SUFFIXES triton/client client
+)
+
+find_library(TRITON_CLIENT_LIBRARY
+    NAMES tritonclient httpclient
+    PATHS ${TRITON_LIB_DIR} /usr/lib /usr/local/lib /usr/lib/x86_64-linux-gnu
+)
+
+if(NOT TRITON_CLIENT_INCLUDE_DIR)
+    message(WARNING "未找到Triton客户端头文件，尝试使用系统路径")
+    set(TRITON_CLIENT_INCLUDE_DIR "/usr/include")
+endif()
+
+if(NOT TRITON_CLIENT_LIBRARY)
+    message(WARNING "未找到Triton客户端库，尝试使用系统库")
+    set(TRITON_CLIENT_LIBRARY "tritonclient")
+endif()
+
+message(STATUS "Triton客户端包含目录: ${TRITON_CLIENT_INCLUDE_DIR}")
+message(STATUS "Triton客户端库: ${TRITON_CLIENT_LIBRARY}")
+
+# 包含目录
+include_directories(${TRITON_CLIENT_INCLUDE_DIR})
+
+# 构建简单版客户端（不依赖复杂的Triton头文件）
+add_executable(minimal_client minimal_client.cpp)
+
+# 链接库
+target_link_libraries(minimal_client 
+    ${CURL_LIBRARIES}
+    Threads::Threads
+    ${CMAKE_DL_LIBS}
+)
+
+# 如果找到了Triton客户端库，构建完整版本
+if(TRITON_CLIENT_LIBRARY AND EXISTS "${TRITON_CLIENT_INCLUDE_DIR}/triton/client/http_client.h")
+    message(STATUS "构建完整的Triton客户端...")
+    
+    add_executable(triton_client client.cpp)
+    add_executable(simple_triton_client simple_client.cpp)
+    
+    target_link_libraries(triton_client 
+        ${TRITON_CLIENT_LIBRARY}
+        ${CURL_LIBRARIES}
+        Threads::Threads
+    )
+    
+    target_link_libraries(simple_triton_client 
+        ${TRITON_CLIENT_LIBRARY}
+        ${CURL_LIBRARIES}
+        Threads::Threads
+    )
+    
+    install(TARGETS triton_client simple_triton_client
+        RUNTIME DESTINATION bin
+    )
+else()
+    message(STATUS "Triton客户端库未找到，只构建最小客户端")
+endif()
+
+# 安装目标
+install(TARGETS minimal_client
+    RUNTIME DESTINATION bin
+)

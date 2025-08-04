@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   tritonserver:
-    image: nvcr.io/nvidia/tritonserver:25.07-py3-igpu-sdk
+    image: nvcr.io/nvidia/tritonserver:25.07-py3-sdk
     runtime: nvidia
     ports:
       - "8000:8000"
@@ -11,6 +9,11 @@ services:
     volumes:
       - ./:/workspace/triton-inference-server
     # command: tritonserver --model-repository=/workspace/triton-inference-server/model_repository
+    environment:
+      # HTTP/HTTPS 代理配置
+      - http_proxy=http://192.168.1.110:7890
+      - https_proxy=http://192.168.1.110:7890
+      - no_proxy=localhost,127.0.0.1,*.local
     stdin_open: true  # 保持标准输入打开
     tty: true         # 启用伪终端
     deploy:
